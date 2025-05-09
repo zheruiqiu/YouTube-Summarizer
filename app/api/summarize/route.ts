@@ -85,7 +85,7 @@ function checkApiKeyAvailability() {
 // Helper function to clean model outputs
 function cleanModelOutput(text: string): string {
   // First check if the text already has the expected format with emojis
-  if (text.match(/🎯|🎙️|📝|🔑|💡|🔄|🎧|🔍|📈|🌐/)) {
+  if (text.match(/🎯|🎙️|📝|🔑|📋|💡|🔄|🎧|🔍|📊|📈|🌐/)) {
     // Text already has the expected format, just do minimal cleaning
     return text
       // Remove only the most common prefixes that might appear before the actual content
@@ -114,7 +114,7 @@ function cleanModelOutput(text: string): string {
     .replace(/^(我将提供|让我分析|我将分析|我会帮助|我已经整理)[^]*?[:：]\s*/i, '')
     .replace(/^(根据您的要求|按照您的|作为对)[^]*?[:：]\s*/i, '')
     // Remove meta instructions while preserving markdown
-    .replace(/^[^:\n🎯🎙️#*\-•]+[:：]\s*/gm, '')  // Remove prefixes but keep markdown and emojis
+    .replace(/^[^:\n🎯🎙️📋#*\-•]+[:：]\s*/gm, '')  // Remove prefixes but keep markdown and emojis
     .replace(/^(?![#*\-•🎯️])[\s\d]+[.。]\s*/gm, '') // Remove numbered lists but keep markdown lists
     .trim();
 }

@@ -31,14 +31,16 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
       overview: 'OVERVIEW',
       keyPoints: 'KEY POINTS',
       takeaways: 'MAIN TAKEAWAYS',
-      context: 'CONTEXT & IMPLICATIONS'
+      context: 'CONTEXT & IMPLICATIONS',
+      details: 'DETAILS'
     },
     'zh': {
       title: '标题',
       overview: '概述',
       keyPoints: '要点',
       takeaways: '主要收获',
-      context: '背景与影响'
+      context: '背景与影响',
+      details: '详细内容'
     }
   };
 
@@ -66,10 +68,16 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
     - Broader context discussion
     - Future implications and expert predictions
 
+    📊 ${prompts.details}:
+    - Provide a comprehensive analysis of the content
+    - Explain complex concepts in depth
+    - Include relevant data and statistics
+    - Discuss methodologies or approaches mentioned
+
     Text to summarize: ${text}
 
     IMPORTANT:
-    1. Keep ALL emojis (🎙️, 🎧, 🔍, 📈, 🌐) at the beginning of each section
+    1. Keep ALL emojis (🎙️, 🎧, 🔍, 📈, 🌐, 📊) at the beginning of each section
     2. Maintain the exact format structure with section headers
     3. Do not add any prefixes or meta-commentary
     4. If writing in Chinese, ensure proper formatting with emojis followed by Chinese section headers
@@ -97,10 +105,16 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
   - Broader context discussion
   - Future implications
 
+  📋 ${prompts.details}:
+  - Provide a more comprehensive analysis
+  - Explain important concepts thoroughly
+  - Include supporting evidence and data
+  - Discuss any methodologies or approaches
+
   Text to summarize: ${text}
 
   IMPORTANT:
-  1. Keep ALL emojis (🎯, 📝, 🔑, 💡, 🔄) at the beginning of each section
+  1. Keep ALL emojis (🎯, 📝, 🔑, 💡, 🔄, 📋) at the beginning of each section
   2. Maintain the exact format structure with section headers
   3. Do not add any prefixes or meta-commentary
   4. If writing in Chinese, ensure proper formatting with emojis followed by Chinese section headers

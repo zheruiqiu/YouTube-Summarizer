@@ -262,7 +262,7 @@ export default function SummaryPage({ params }: PageProps) {
                   p: ({node, ...props}) => {
                     const content = props.children?.toString() || '';
                     // Check if paragraph starts with emoji
-                    if (content.match(/^\s*[🎯🎙️📝🔑💡🔄🎧🔍📈🌐]/)) {
+                    if (content.match(/^\s*[🎯🎙️📝🔑📋💡🔄🎧🔍📊📈🌐]/)) {
                       return <p className="font-bold text-lg" {...props} />;
                     }
                     return <p {...props} />;
