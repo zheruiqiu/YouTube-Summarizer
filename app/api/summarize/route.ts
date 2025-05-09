@@ -84,6 +84,16 @@ function checkApiKeyAvailability() {
 
 // Helper function to clean model outputs
 function cleanModelOutput(text: string): string {
+  // First check if the text already has the expected format with emojis
+  if (text.match(/🎯|🎙️|📝|🔑|💡|🔄|🎧|🔍|📈|🌐/)) {
+    // Text already has the expected format, just do minimal cleaning
+    return text
+      // Remove only the most common prefixes that might appear before the actual content
+      .replace(/^(Here is the summary:|Summary:|以下是摘要：|摘要：)\s*/i, '')
+      .trim();
+  }
+
+  // If the text doesn't have the expected format, apply more aggressive cleaning
   return text
     // English prefixes
     .replace(/^(Okay|Here'?s?( is)?|Let me|I will|I'll|I can|I would|I am going to|Allow me to|Sure|Of course|Certainly|Alright)[^]*?,\s*/i, '')
@@ -190,7 +200,7 @@ const AI_MODELS = {
           messages: [
             {
               role: "system",
-              content: "You are a direct and concise summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
+              content: "You are a direct and concise summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. Follow the exact format structure provided in the prompt, including all emojis and section headers. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
             },
             {
               role: "user",
@@ -269,7 +279,15 @@ async function splitTranscriptIntoChunks(transcript: string, chunkSize: number =
     chunks.push(currentChunk.join(' '));
   }
 
-  logger.info(`Split transcript into ${chunks.length} chunks with size ${chunkSize} and overlap ${overlap}`);
+  const totalWords = words.length;
+  logger.info(
+    `Split transcript details:\n` +
+    `- Chunks: ${chunks.length}\n` +
+    `- Chunk size: ${chunkSize} characters\n` +
+    `- Overlap: ${overlap} characters\n` +
+    `- Total word count: ${totalWords}\n` +
+    `- Average words per chunk: ${Math.round(totalWords / chunks.length)}`
+  );
 
   return chunks;
 }
@@ -580,7 +598,7 @@ async function getTranscript(videoId: string): Promise<{ transcript: string; sou
 }
 
 // Add new endpoint to check API key availability
-export async function GET(req: Request) {
+export async function GET() {
   return NextResponse.json(checkApiKeyAvailability());
 }
 
@@ -655,6 +673,14 @@ export async function POST(req: Request) {
           message: `Processing section ${i + 1} of ${totalChunks}...`
         });
 
+        const chunkText = chunks[i];
+        const wordCount = chunkText.split(' ').length;
+
+        logger.info(
+          `Processing chunk ${i + 1}/${totalChunks}:\n` +
+          `- Words in this chunk: ${wordCount}`
+        );
+
         const prompt = `Create a detailed summary of section ${i + 1} in ${language}.
         Maintain all important information, arguments, and connections.
         Pay special attention to:
@@ -663,9 +689,10 @@ export async function POST(req: Request) {
         - Connections with other mentioned topics
         - Key statements and conclusions
 
-        Text: ${chunks[i]}`;
+        Text: ${chunkText}`;
 
         const text = await selectedModel.generateContent(prompt);
+        logger.info(`Completed summary for chunk ${i + 1}/${totalChunks}`);
         intermediateSummaries.push(text);
       }
 
@@ -679,8 +706,24 @@ export async function POST(req: Request) {
       });
 
       const combinedSummary = intermediateSummaries.join('\n\n=== Next Section ===\n\n');
+      const combinedWordCount = combinedSummary.split(' ').length;
+      logger.info(
+        `Creating final summary:\n` +
+        `- Combined intermediate summaries: ${intermediateSummaries.length}\n` +
+        `- Total word count: ${combinedWordCount}`
+      );
+
       const finalPrompt = createSummaryPrompt(combinedSummary, language, mode);
+      logger.info(`Sending final prompt to ${selectedModel.name} model`);
+
       const summary = await selectedModel.generateContent(finalPrompt);
+      const summaryWordCount = summary ? summary.split(' ').length : 0;
+      logger.info(
+        `Final summary generated:\n` +
+        `- Word count: ${summaryWordCount}\n` +
+        `- Language: ${language}\n` +
+        `- Mode: ${mode}`
+      );
 
       if (!summary) {
         throw new Error('No summary content generated');

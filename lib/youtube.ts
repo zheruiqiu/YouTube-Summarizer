@@ -46,7 +46,7 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
 
   if (mode === 'podcast') {
     return `Please provide a detailed podcast-style summary of the following content in ${targetLanguage}.
-    Structure your response as follows:
+    Structure your response EXACTLY as follows, keeping all emojis and section headers intact:
 
     🎙️ ${prompts.title}: Create an engaging title
 
@@ -68,11 +68,16 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
 
     Text to summarize: ${text}
 
-    Ensure the summary is comprehensive enough for someone who hasn't seen the original content.`;
+    IMPORTANT:
+    1. Keep ALL emojis (🎙️, 🎧, 🔍, 📈, 🌐) at the beginning of each section
+    2. Maintain the exact format structure with section headers
+    3. Do not add any prefixes or meta-commentary
+    4. If writing in Chinese, ensure proper formatting with emojis followed by Chinese section headers
+    5. Ensure the summary is comprehensive enough for someone who hasn't seen the original content`;
   }
 
   return `Please provide a detailed summary of the following content in ${targetLanguage}.
-  Structure your response as follows:
+  Structure your response EXACTLY as follows, keeping all emojis and section headers intact:
 
   🎯 ${prompts.title}: Create a descriptive title
 
@@ -94,5 +99,10 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
 
   Text to summarize: ${text}
 
-  Ensure the summary is comprehensive enough for someone who hasn't seen the original content.`;
+  IMPORTANT:
+  1. Keep ALL emojis (🎯, 📝, 🔑, 💡, 🔄) at the beginning of each section
+  2. Maintain the exact format structure with section headers
+  3. Do not add any prefixes or meta-commentary
+  4. If writing in Chinese, ensure proper formatting with emojis followed by Chinese section headers
+  5. Ensure the summary is comprehensive enough for someone who hasn't seen the original content`;
 }

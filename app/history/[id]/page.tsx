@@ -153,7 +153,25 @@ export default function HistoryDetailPage({ params }: PageProps) {
       </CardHeader>
       <CardContent>
         <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
-          <ReactMarkdown>{summary.content}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              // Ensure emojis are rendered properly
+              p: ({node, ...props}) => {
+                const content = props.children?.toString() || '';
+                // Check if paragraph starts with emoji
+                if (content.match(/^\s*[🎯🎙️📝🔑💡🔄🎧🔍📈🌐]/)) {
+                  return <p className="font-bold text-lg" {...props} />;
+                }
+                return <p {...props} />;
+              },
+              // Enhance headers that might be used in the summary
+              h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-lg font-bold mt-4" {...props} />,
+            }}
+          >
+            {summary.content}
+          </ReactMarkdown>
         </div>
       </CardContent>
     </Card>
