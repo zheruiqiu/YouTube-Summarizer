@@ -5,7 +5,6 @@ import { extractVideoId, createSummaryPrompt } from '@/lib/youtube';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Groq } from "groq-sdk";
 import OpenAI from 'openai';
-import DeepSeek from 'deepseek-api';
 import ytdl from 'ytdl-core';
 import fs from 'fs';
 import path from 'path';
@@ -59,7 +58,10 @@ function getOpenAIClient() {
 function getDeepSeekClient() {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return null;
-  return new DeepSeek({ apiKey });
+  return new OpenAI({
+    apiKey,
+    baseURL: 'https://api.deepseek.com'
+  });
 }
 
 // Helper function to get user-friendly model names
