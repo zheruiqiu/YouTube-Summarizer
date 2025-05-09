@@ -101,6 +101,8 @@ export default function SummaryPage({ params }: PageProps) {
                   setSummary(data.summary)
                   setSource(data.source)
                   break
+                } else if (data.type === 'error') {
+                  throw new Error(data.error)
                 }
               } catch (jsonError) {
                 console.error('Error parsing JSON line:', jsonError, jsonLine)
@@ -225,7 +227,32 @@ export default function SummaryPage({ params }: PageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {error && <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md">{error}</div>}
+          {error && (
+            <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md mb-4">
+              <h3 className="font-semibold mb-1">Error</h3>
+              <p>{error}</p>
+              {error.includes('DeepSeek API error') && (
+                <div className="mt-2 text-sm">
+                  <p className="font-medium">Possible solutions:</p>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
+                    {error.includes('Authentication failed') && (
+                      <li>Check that your DeepSeek API key is valid and correctly configured in the .env file</li>
+                    )}
+                    {error.includes('Insufficient balance') && (
+                      <li>Top up your DeepSeek account or switch to a different AI model</li>
+                    )}
+                    {error.includes('Rate limit') && (
+                      <li>Wait a few minutes before trying again or switch to a different AI model</li>
+                    )}
+                    {(error.includes('server error') || error.includes('server overloaded')) && (
+                      <li>Try again later when the DeepSeek service is less busy or switch to a different AI model</li>
+                    )}
+                    <li>Try selecting a different AI model from the homepage</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           {!loading && !error && (
             <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">

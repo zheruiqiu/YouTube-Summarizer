@@ -184,24 +184,65 @@ const AI_MODELS = {
       if (!deepseek) {
         throw new Error(`${MODEL_NAMES.deepseek} API key is not configured. Please add your API key in the settings or choose a different model.`);
       }
-      const completion = await deepseek.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: "You are a direct and concise summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        model: this.model,
-        max_tokens: 8000, // Maximized token limit for comprehensive summaries (DeepSeek supports up to 8K output tokens)
-      });
 
-      // deepseek-reasoner returns both reasoning_content and content
-      // We use the final content (answer) for the summary
-      return cleanModelOutput(completion.choices[0]?.message?.content || '');
+      try {
+        const completion = await deepseek.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content: "You are a direct and concise summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          model: this.model,
+          max_tokens: 8000, // Maximized token limit for comprehensive summaries (DeepSeek supports up to 8K output tokens)
+        });
+
+        // deepseek-reasoner returns both reasoning_content and content
+        // We use the final content (answer) for the summary
+        return cleanModelOutput(completion.choices[0]?.message?.content || '');
+      } catch (error: any) {
+        // Handle DeepSeek API specific errors
+        const statusCode = error?.status || error?.response?.status;
+        let errorMessage = error?.message || 'Unknown error occurred';
+
+        // Map status codes to user-friendly error messages based on DeepSeek documentation
+        switch (statusCode) {
+          case 400:
+            errorMessage = 'Invalid request format: ' + errorMessage;
+            break;
+          case 401:
+            errorMessage = 'Authentication failed: Please check your DeepSeek API key';
+            break;
+          case 402:
+            errorMessage = 'Insufficient balance: Your DeepSeek account has run out of credits. Please top up your account.';
+            break;
+          case 422:
+            errorMessage = 'Invalid parameters in request: ' + errorMessage;
+            break;
+          case 429:
+            errorMessage = 'Rate limit reached: You are sending requests to DeepSeek API too quickly. Please try again later.';
+            break;
+          case 500:
+            errorMessage = 'DeepSeek server error: Please try again later.';
+            break;
+          case 503:
+            errorMessage = 'DeepSeek server overloaded: The service is temporarily unavailable due to high traffic. Please try again later.';
+            break;
+        }
+
+        logger.error('DeepSeek API error:', {
+          statusCode,
+          message: errorMessage,
+          originalError: error.message,
+          stack: error.stack
+        });
+
+        throw new Error(`DeepSeek API error: ${errorMessage}`);
+      }
     }
   }
 };
@@ -717,10 +758,25 @@ export async function POST(req: Request) {
         cause: error?.cause
       });
 
+      // Determine if this is a DeepSeek API error
+      const isDeepSeekError = error?.message?.includes('DeepSeek API error');
+
+      // Create a user-friendly error message
+      let errorMessage = error?.message || 'Failed to process video';
+      let errorDetails = error?.toString() || 'Unknown error';
+
+      // For DeepSeek errors, provide more context
+      if (isDeepSeekError) {
+        // The error message is already formatted in the DeepSeek model's error handler
+        errorDetails = 'This error occurred while communicating with the DeepSeek API. ' +
+                      'You may want to try a different AI model or try again later.';
+      }
+
       await writeProgress({
         type: 'error',
-        error: error?.message || 'Failed to process video',
-        details: error?.toString() || 'Unknown error'
+        error: errorMessage,
+        details: errorDetails,
+        isDeepSeekError: isDeepSeekError
       }).catch((writeError) => {
         logger.error('Failed to write error progress:', writeError);
       });
