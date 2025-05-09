@@ -40,8 +40,12 @@ interface ModelSelectorProps {
 export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorProps) {
   const [modelAvailability, setModelAvailability] = useState<ModelAvailability | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Set mounted state immediately
+    setMounted(true);
+
     async function fetchModelAvailability() {
       try {
         const response = await fetch('/api/summarize');
@@ -57,13 +61,23 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
     fetchModelAvailability();
   }, []);
 
-  if (isLoading) {
+  // Show loading state when data is being fetched
+  if (isLoading && mounted) {
     return (
       <Select disabled>
         <SelectTrigger>
           <SelectValue placeholder="Loading models..." />
         </SelectTrigger>
       </Select>
+    );
+  }
+
+  // Show static placeholder during initial render (before hydration)
+  if (!mounted) {
+    return (
+      <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
+        {MODEL_NAMES[selectedModel as keyof typeof MODEL_NAMES]}
+      </div>
     );
   }
 

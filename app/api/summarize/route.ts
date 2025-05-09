@@ -301,6 +301,7 @@ async function downloadAudio(videoId: string): Promise<string> {
 
     // First download the audio
     await new Promise<void>((resolve, reject) => {
+      // Create a clean URL with just the video ID, no timestamp or other parameters
       const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
       logger.debug(`Downloading from URL: ${videoUrl}`);
 
@@ -499,7 +500,7 @@ async function transcribeWithWhisper(audioPath: string): Promise<string> {
 async function getTranscript(videoId: string): Promise<{ transcript: string; source: 'youtube' | 'whisper'; title: string }> {
   try {
     logger.info(`Attempting to fetch YouTube transcript for video ${videoId}`);
-    // First try YouTube transcripts
+    // First try YouTube transcripts - use clean video ID without any parameters
     const transcriptList = await YoutubeTranscript.fetchTranscript(videoId);
 
     // Extract title and process transcript as before

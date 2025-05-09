@@ -1,6 +1,61 @@
+/**
+ * Extracts the YouTube video ID from various URL formats.
+ * Handles standard URLs, URLs with time parameters (e.g., &t=16s),
+ * shortened URLs (youtu.be), embed URLs, and shorts URLs.
+ *
+ * @param youtube_url The YouTube URL to extract the video ID from
+ * @returns The extracted video ID
+ * @throws Error if the video ID cannot be extracted
+ */
 export function extractVideoId(youtube_url: string): string {
+  // First, try to extract video ID using URL object for standard URLs
+  try {
+    const url = new URL(youtube_url.trim());
+
+    // Handle standard youtube.com URLs
+    if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+      // For standard watch URLs: youtube.com/watch?v=VIDEO_ID
+      if (url.pathname.includes('/watch')) {
+        const videoId = url.searchParams.get('v');
+        if (videoId && videoId.length === 11) {
+          return videoId;
+        }
+      }
+
+      // For shortened URLs: youtu.be/VIDEO_ID
+      if (url.hostname === 'youtu.be') {
+        const videoId = url.pathname.substring(1); // Remove leading slash
+        if (videoId && videoId.length === 11) {
+          return videoId;
+        }
+      }
+
+      // For embed URLs: youtube.com/embed/VIDEO_ID
+      if (url.pathname.includes('/embed/')) {
+        const parts = url.pathname.split('/');
+        const videoId = parts[parts.length - 1];
+        if (videoId && videoId.length === 11) {
+          return videoId;
+        }
+      }
+
+      // For shorts URLs: youtube.com/shorts/VIDEO_ID
+      if (url.pathname.includes('/shorts/')) {
+        const parts = url.pathname.split('/');
+        const videoId = parts[parts.length - 1];
+        if (videoId && videoId.length === 11) {
+          return videoId;
+        }
+      }
+    }
+  } catch (e) {
+    // If URL parsing fails, fall back to regex patterns
+    console.log("URL parsing failed, falling back to regex patterns");
+  }
+
+  // Fall back to regex patterns for cases where URL parsing fails
   const patterns = [
-    /(?:v=|\/)([0-9A-Za-z_-]{11}).*/,      // Standard and shared URLs
+    /(?:v=)([0-9A-Za-z_-]{11})(?:&|$)/,     // Standard URLs with query params
     /(?:embed\/)([0-9A-Za-z_-]{11})/,       // Embed URLs
     /(?:youtu\.be\/)([0-9A-Za-z_-]{11})/,   // Shortened URLs
     /(?:shorts\/)([0-9A-Za-z_-]{11})/,      // YouTube Shorts
