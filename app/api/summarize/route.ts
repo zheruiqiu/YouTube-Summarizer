@@ -94,15 +94,6 @@ function cleanModelOutput(text: string): string {
     .replace(/^(Here are|The following is|This is|Below is).*?:\s*/i, '')
     .replace(/^(I'll provide|Let me break|I'll break|I'll help|I've structured).*?:\s*/i, '')
     .replace(/^(As requested|Following your|In response to).*?:\s*/i, '')
-    // German prefixes
-    .replace(/^(Okay|Hier( ist)?|Lass mich|Ich werde|Ich kann|Ich würde|Ich möchte|Erlauben Sie mir|Sicher|Natürlich|Gewiss|In Ordnung)[^]*?,\s*/i, '')
-    .replace(/^(Hier( ist)?|Ich werde|Lass mich|Ich kann|Ich würde|Ich möchte)[^]*?(Zusammenfassung|Übersetzung|Analyse).*?:\s*/i, '')
-    .replace(/^(Basierend auf|Laut|Gemäß).*?,\s*/i, '')
-    .replace(/^Ich verstehe.*?[.!]\s*/i, '')
-    .replace(/^(Jetzt|Zunächst|Lass uns),?\s*/i, '')
-    .replace(/^(Hier sind|Folgendes|Dies ist|Im Folgenden).*?:\s*/i, '')
-    .replace(/^(Ich werde|Lass mich|Ich helfe|Ich habe strukturiert).*?:\s*/i, '')
-    .replace(/^(Wie gewünscht|Entsprechend Ihrer|Als Antwort auf).*?:\s*/i, '')
     // Chinese prefixes
     .replace(/^(好的|这是|让我|我将|我会|我能|我想|请允许我|当然|确实|好的)[^]*?,\s*/i, '')
     .replace(/^(这是|我将|让我|我能|我想)[^]*?(摘要|翻译|分析).*?[:：]\s*/i, '')

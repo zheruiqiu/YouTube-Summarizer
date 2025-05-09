@@ -21,7 +21,6 @@ export function extractVideoId(youtube_url: string): string {
 
 export const AVAILABLE_LANGUAGES = {
   'English': 'en',
-  'German': 'de',
   '中文': 'zh'
 } as const;
 
@@ -33,13 +32,6 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
       keyPoints: 'KEY POINTS',
       takeaways: 'MAIN TAKEAWAYS',
       context: 'CONTEXT & IMPLICATIONS'
-    },
-    'de': {
-      title: 'TITEL',
-      overview: 'ÜBERBLICK',
-      keyPoints: 'KERNPUNKTE',
-      takeaways: 'HAUPTERKENNTNISSE',
-      context: 'KONTEXT & AUSWIRKUNGEN'
     },
     'zh': {
       title: '标题',
