@@ -196,7 +196,7 @@ const AI_MODELS = {
           }
         ],
         model: this.model,
-        max_tokens: 4096, // Increased token limit for longer summaries
+        max_tokens: 8000, // Maximized token limit for comprehensive summaries (DeepSeek supports up to 8K output tokens)
       });
 
       // deepseek-reasoner returns both reasoning_content and content
@@ -206,7 +206,7 @@ const AI_MODELS = {
   }
 };
 
-async function splitTranscriptIntoChunks(transcript: string, chunkSize: number = 7000, overlap: number = 1000): Promise<string[]> {
+async function splitTranscriptIntoChunks(transcript: string, chunkSize: number = 20000, overlap: number = 2500): Promise<string[]> {
   const words = transcript.split(' ');
   const chunks: string[] = [];
   let currentChunk: string[] = [];
@@ -227,6 +227,8 @@ async function splitTranscriptIntoChunks(transcript: string, chunkSize: number =
   if (currentChunk.length > 0) {
     chunks.push(currentChunk.join(' '));
   }
+
+  logger.info(`Split transcript into ${chunks.length} chunks with size ${chunkSize} and overlap ${overlap}`);
 
   return chunks;
 }
