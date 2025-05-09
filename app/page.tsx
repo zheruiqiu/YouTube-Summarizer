@@ -12,7 +12,7 @@ import { ModelSelector } from "@/components/ModelSelector"
 
 export default function Home() {
   const [url, setUrl] = useState("")
-  const [language, setLanguage] = useState("English")
+  const [language, setLanguage] = useState("中文")
   const [mode, setMode] = useState<"video" | "podcast">("video")
   const [aiModel, setAiModel] = useState<"deepseek" | "gemini" | "groq" | "gpt4">("deepseek")
   const router = useRouter()

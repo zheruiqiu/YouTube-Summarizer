@@ -42,7 +42,7 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
     }
   };
 
-  const prompts = languagePrompts[targetLanguage as keyof typeof languagePrompts] || languagePrompts.en;
+  const prompts = languagePrompts[targetLanguage as keyof typeof languagePrompts] || languagePrompts.zh;
 
   if (mode === 'podcast') {
     return `Please provide a detailed podcast-style summary of the following content in ${targetLanguage}.

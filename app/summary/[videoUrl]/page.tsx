@@ -41,7 +41,7 @@ export default function SummaryPage({ params }: PageProps) {
   })
 
   const searchParams = useSearchParams()
-  const languageCode = searchParams.get("lang") || "en"
+  const languageCode = searchParams.get("lang") || "zh"
   const mode = (searchParams.get("mode") || "video") as "video" | "podcast"
   const aiModel = (searchParams.get("model") || "deepseek") as "deepseek" | "gemini" | "groq" | "gpt4"
   const { videoUrl } = use(params)
@@ -124,7 +124,7 @@ export default function SummaryPage({ params }: PageProps) {
   }, [videoUrl, languageCode, mode, aiModel])
 
   const displayLanguage =
-    Object.entries(AVAILABLE_LANGUAGES).find(([_, code]) => code === languageCode)?.[0] || "English"
+    Object.entries(AVAILABLE_LANGUAGES).find(([_, code]) => code === languageCode)?.[0] || "中文"
 
   const getSourceIcon = () => {
     switch (source) {
