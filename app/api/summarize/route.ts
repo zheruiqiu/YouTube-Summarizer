@@ -267,7 +267,7 @@ const AI_MODELS = {
   }
 };
 
-async function splitTranscriptIntoChunks(transcript: string, chunkSize: number = 20000, overlap: number = 2500): Promise<string[]> {
+async function splitTranscriptIntoChunks(transcript: string, chunkSize: number = 150000, overlap: number = 10000): Promise<string[]> {
   const words = transcript.split(' ');
   const chunks: string[] = [];
   let currentChunk: string[] = [];
@@ -276,7 +276,7 @@ async function splitTranscriptIntoChunks(transcript: string, chunkSize: number =
   for (const word of words) {
     if (currentLength + word.length > chunkSize && currentChunk.length > 0) {
       chunks.push(currentChunk.join(' '));
-      // Keep last few words for overlap
+      // Keep last few words for overlap (approximately 1000 words for 10000 character overlap)
       const overlapWords = currentChunk.slice(-Math.floor(overlap / 10));
       currentChunk = [...overlapWords];
       currentLength = overlapWords.join(' ').length;
