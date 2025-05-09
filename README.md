@@ -1,6 +1,8 @@
 # YouTube Video Summary
 
-A modern Next.js application for AI-powered YouTube video summarization, forked from the original YouTube AI Summarizer project. This application allows you to generate concise summaries of YouTube videos using different AI models, with support for multiple languages and summary styles.
+> **Note**: This project is a fork of [YouTube AI Summarizer](https://github.com/DevRico003/youtube_summarizer) originally created by Enrico Carteciano. This fork includes additional features, bug fixes, and improvements while maintaining the core functionality of the original project.
+
+A modern Next.js application for AI-powered YouTube video summarization. This application allows you to generate concise summaries of YouTube videos using different AI models, with support for multiple languages and summary styles.
 
 ## 🎯 Features
 
