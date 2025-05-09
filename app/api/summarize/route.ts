@@ -178,7 +178,7 @@ const AI_MODELS = {
   },
   deepseek: {
     name: "deepseek",
-    model: "deepseek-chat",
+    model: "deepseek-reasoner", // Using DeepSeek-R1 reasoning model
     async generateContent(prompt: string) {
       const deepseek = getDeepSeekClient();
       if (!deepseek) {
@@ -188,7 +188,7 @@ const AI_MODELS = {
         messages: [
           {
             role: "system",
-            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
+            content: "You are a direct and concise summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
           },
           {
             role: "user",
@@ -196,9 +196,11 @@ const AI_MODELS = {
           }
         ],
         model: this.model,
-        temperature: 0.7,
-        max_tokens: 2048,
+        max_tokens: 4096, // Increased token limit for longer summaries
       });
+
+      // deepseek-reasoner returns both reasoning_content and content
+      // We use the final content (answer) for the summary
       return cleanModelOutput(completion.choices[0]?.message?.content || '');
     }
   }

@@ -19,7 +19,7 @@ const MODEL_NAMES = {
 };
 
 const MODEL_DESCRIPTIONS = {
-  deepseek: "Powerful Chinese-English bilingual model",
+  deepseek: "DeepSeek-R1: Advanced reasoning model with Chain-of-Thought",
   gemini: "Fast and cost-effective, good for general summaries",
   groq: "Very fast, good for long videos",
   gpt4: "High-quality summaries, slightly slower"
