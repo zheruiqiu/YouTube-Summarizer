@@ -550,7 +550,7 @@ export async function POST(req: Request) {
 
   (async () => {
     try {
-      const { url, language, mode, aiModel = 'gemini' } = await req.json();
+      const { url, language, mode, aiModel = 'deepseek' } = await req.json();
       const videoId = extractVideoId(url);
 
       logger.info('Processing video request', {

@@ -12,24 +12,24 @@ interface ModelAvailability {
 }
 
 const MODEL_NAMES = {
+  deepseek: "DeepSeek",
   gemini: "Google Gemini",
   groq: "Groq",
-  gpt4: "GPT-4",
-  deepseek: "DeepSeek"
+  gpt4: "GPT-4"
 };
 
 const MODEL_DESCRIPTIONS = {
+  deepseek: "Powerful Chinese-English bilingual model",
   gemini: "Fast and cost-effective, good for general summaries",
   groq: "Very fast, good for long videos",
-  gpt4: "High-quality summaries, slightly slower",
-  deepseek: "Powerful Chinese-English bilingual model"
+  gpt4: "High-quality summaries, slightly slower"
 };
 
 const MODEL_ICONS = {
+  deepseek: Bot,
   gemini: Bot,
   groq: Cpu,
-  gpt4: Bot,
-  deepseek: Bot
+  gpt4: Bot
 };
 
 interface ModelSelectorProps {

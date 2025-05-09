@@ -14,7 +14,7 @@ export default function Home() {
   const [url, setUrl] = useState("")
   const [language, setLanguage] = useState("English")
   const [mode, setMode] = useState<"video" | "podcast">("video")
-  const [aiModel, setAiModel] = useState<"gemini" | "groq" | "gpt4" | "deepseek">("gemini")
+  const [aiModel, setAiModel] = useState<"deepseek" | "gemini" | "groq" | "gpt4">("deepseek")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,7 +87,7 @@ export default function Home() {
 
             <ModelSelector
               selectedModel={aiModel}
-              onModelChange={(model) => setAiModel(model as "gemini" | "groq" | "gpt4" | "deepseek")}
+              onModelChange={(model) => setAiModel(model as "deepseek" | "gemini" | "groq" | "gpt4")}
             />
 
             <Button type="submit" className="w-full">
