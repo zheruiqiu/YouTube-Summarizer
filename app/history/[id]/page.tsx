@@ -3,13 +3,24 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { AVAILABLE_LANGUAGES } from "@/lib/youtube"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, Youtube, Clock, Globe } from "lucide-react"
+import { ArrowLeft, Youtube, Clock, Globe, Trash2, AlertCircle } from "lucide-react"
 import { use } from "react"
 import ReactMarkdown from 'react-markdown'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface Summary {
   id: string
@@ -28,6 +39,7 @@ export default function HistoryDetailPage({ params }: PageProps) {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
   const { id } = use(params)
 
@@ -52,6 +64,27 @@ export default function HistoryDetailPage({ params }: PageProps) {
 
     fetchSummary()
   }, [id])
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+
+      const response = await fetch(`/api/history/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete summary")
+      }
+
+      // Redirect to history page after successful deletion
+      router.push('/history')
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete summary")
+      setIsDeleting(false)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -174,6 +207,38 @@ export default function HistoryDetailPage({ params }: PageProps) {
           </ReactMarkdown>
         </div>
       </CardContent>
+      <CardFooter className="flex justify-end pt-4 border-t">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" disabled={isDeleting} className="flex items-center">
+              {isDeleting ? (
+                <>
+                  <span className="mr-2">Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Summary
+                </>
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete this summary from your history.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardFooter>
     </Card>
   )
 }

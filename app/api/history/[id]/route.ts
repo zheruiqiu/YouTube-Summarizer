@@ -74,3 +74,47 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: Props
+): Promise<Response> {
+  try {
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Summary ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if the summary exists
+    const summary = await prisma.summary.findUnique({
+      where: { id }
+    });
+
+    if (!summary) {
+      return NextResponse.json(
+        { error: 'Summary not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete the summary
+    await prisma.summary.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Summary deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting summary:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete summary' },
+      { status: 500 }
+    );
+  }
+}

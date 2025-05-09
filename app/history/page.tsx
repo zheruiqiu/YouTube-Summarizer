@@ -2,11 +2,24 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { AVAILABLE_LANGUAGES } from "@/lib/youtube"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Youtube, Clock, Headphones } from "lucide-react"
+import { Youtube, Clock, Headphones, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface Summary {
   id: string
@@ -24,25 +37,50 @@ export default function HistoryPage() {
   const [summaries, setSummaries] = useState<Summary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
+
+  const fetchSummaries = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/history')
+      if (!response.ok) {
+        throw new Error('Failed to fetch summaries')
+      }
+      const data = await response.json()
+      setSummaries(data.summaries)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load summaries')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchSummaries = async () => {
-      try {
-        const response = await fetch('/api/history')
-        if (!response.ok) {
-          throw new Error('Failed to fetch summaries')
-        }
-        const data = await response.json()
-        setSummaries(data.summaries)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load summaries')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchSummaries()
   }, [])
+
+  const handleClearHistory = async () => {
+    try {
+      setIsDeleting(true)
+
+      const response = await fetch('/api/history', {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to clear history")
+      }
+
+      // Refresh the list
+      await fetchSummaries()
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear history")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString(undefined, {
@@ -62,7 +100,10 @@ export default function HistoryPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-4xl font-bold mb-8">Summary History</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Summary History</h1>
+          <Skeleton className="h-10 w-32" />
+        </div>
         <Card>
           <CardContent className="py-6">
             <div className="space-y-4">
@@ -92,30 +133,11 @@ export default function HistoryPage() {
 
               <div className="space-y-2 pt-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-1/3 text-right">Processing Video</div>
+                  <div className="w-1/3 text-right">Loading History</div>
                   <div className="flex-1">
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-primary w-[45%] rounded-full animate-pulse" />
                     </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Skeleton className="h-3 w-3" />
-                    <span className="text-muted-foreground">Analyzing video content...</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Skeleton className="h-3 w-3" />
-                    <span className="text-muted-foreground">Generating summary sections...</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Skeleton className="h-3 w-3" />
-                    <span className="text-muted-foreground">Creating final summary...</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Skeleton className="h-3 w-3" />
-                    <span className="text-muted-foreground">Saving to history...</span>
                   </div>
                 </div>
               </div>
@@ -140,7 +162,41 @@ export default function HistoryPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-8">Summary History</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">Summary History</h1>
+        {summaries.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeleting} className="flex items-center">
+                {isDeleting ? (
+                  <>
+                    <span className="mr-2">Clearing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear History
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete all summaries from your history.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Clear All
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
       <div className="space-y-4">
         {summaries.length === 0 ? (
           <Card>

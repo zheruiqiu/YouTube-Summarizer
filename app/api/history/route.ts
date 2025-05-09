@@ -48,3 +48,21 @@ export async function GET() {
     );
   }
 }
+
+export async function DELETE() {
+  try {
+    // Delete all summaries
+    await prisma.summary.deleteMany({});
+
+    return NextResponse.json({
+      success: true,
+      message: 'All summaries deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting all summaries:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete summaries' },
+      { status: 500 }
+    );
+  }
+}
