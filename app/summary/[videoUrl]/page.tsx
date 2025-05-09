@@ -83,22 +83,31 @@ export default function SummaryPage({ params }: PageProps) {
 
           const chunk = decoder.decode(value)
           try {
-            const data = JSON.parse(chunk)
+            // Split by newlines to handle multiple JSON objects in a single chunk
+            const jsonLines = chunk.split('\n').filter(line => line.trim() !== '')
 
-            if (data.type === 'progress') {
-              setStatus({
-                currentChunk: data.currentChunk,
-                totalChunks: data.totalChunks,
-                stage: data.stage,
-                message: data.message
-              })
-            } else if (data.type === 'complete') {
-              setSummary(data.summary)
-              setSource(data.source)
-              break
+            for (const jsonLine of jsonLines) {
+              try {
+                const data = JSON.parse(jsonLine)
+
+                if (data.type === 'progress') {
+                  setStatus({
+                    currentChunk: data.currentChunk,
+                    totalChunks: data.totalChunks,
+                    stage: data.stage,
+                    message: data.message
+                  })
+                } else if (data.type === 'complete') {
+                  setSummary(data.summary)
+                  setSource(data.source)
+                  break
+                }
+              } catch (jsonError) {
+                console.error('Error parsing JSON line:', jsonError, jsonLine)
+              }
             }
           } catch (e) {
-            console.error('Error parsing chunk:', e)
+            console.error('Error processing chunk:', e)
           }
         }
       } catch (err) {
