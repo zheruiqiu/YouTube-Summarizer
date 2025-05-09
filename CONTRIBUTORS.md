@@ -27,3 +27,7 @@ Zherui Qiu (Copyright (c) 2025)
 - Added comprehensive test suite for URL extraction
 - Improved error handling for various YouTube URL formats
 - Added detailed documentation with JSDoc comments
+- Fixed duplicate API requests issue by implementing request tracking
+- Improved client-side hydration for dropdown components
+- Added server-side request deduplication for better performance
+- Fixed dropdown initialization issues on page load

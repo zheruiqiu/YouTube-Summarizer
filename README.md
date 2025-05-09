@@ -1,12 +1,11 @@
-# NEW VERSION -> Python Version is in the branch "old_python_version"
+# YouTube Video Summary
 
-# YouTube AI Summarizer
-
-A modern Next.js-based tool for AI-powered YouTube video summarization. This application allows you to generate concise summaries of YouTube videos using different AI models, with support for multiple languages and summary styles.
+A modern Next.js application for AI-powered YouTube video summarization, forked from the original YouTube AI Summarizer project. This application allows you to generate concise summaries of YouTube videos using different AI models, with support for multiple languages and summary styles.
 
 ## 🎯 Features
 
 - **Multiple AI Models**: Choose your preferred AI model for summarization:
+  - DeepSeek Reasoner (Advanced reasoning capabilities)
   - Google Gemini 2.0 Flash (Fast and efficient)
   - Groq with Llama 70B (High accuracy)
   - GPT-4o-mini (Balanced performance)
@@ -15,7 +14,7 @@ A modern Next.js-based tool for AI-powered YouTube video summarization. This app
   - Models become available based on the API keys you provide
   - Mix and match different models as needed
 - **Multilingual Support**:
-  - Generate summaries in English and German
+  - Generate summaries in English and Chinese
   - Clean formatting in both languages
   - Proper handling of language-specific structures
 - **Flexible Summary Modes**:
@@ -84,6 +83,7 @@ yarn install
 ```env
 # You only need to add the API keys for the models you want to use
 # At least one API key is required
+DEEPSEEK_API_KEY="your-deepseek-api-key"
 GEMINI_API_KEY="your-gemini-api-key"
 GROQ_API_KEY="your-groq-api-key"
 OPENAI_API_KEY="your-openai-api-key"
@@ -120,6 +120,7 @@ docker build -t youtube-summarizer .
 docker run -d \
   -p 3000:3000 \
   -v ./prisma:/app/prisma \
+  -e DEEPSEEK_API_KEY="your-key" \
   -e GEMINI_API_KEY="your-key" \
   -e GROQ_API_KEY="your-key" \
   -e OPENAI_API_KEY="your-key" \
@@ -169,19 +170,25 @@ npx prisma db push
 
 ### Obtaining API Keys
 
-1. **Google Gemini API Key** (Good starting choice - free tier available):
+1. **DeepSeek API Key** (Recommended - powerful reasoning capabilities):
+   - Visit [DeepSeek API](https://platform.deepseek.com/)
+   - Create an account or log in
+   - Navigate to API settings
+   - Generate a new API key
+
+2. **Google Gemini API Key** (Good starting choice - free tier available):
    - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
    - Create a new project if needed
    - Generate an API key
    - Free tier available with generous limits
 
-2. **Groq API Key**:
+3. **Groq API Key**:
    - Go to [Groq Cloud](https://console.groq.com/)
    - Sign up for an account
    - Navigate to API settings
    - Generate a new API key
 
-3. **OpenAI API Key**:
+4. **OpenAI API Key**:
    - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
    - Create an account or log in
    - Go to API settings
@@ -214,7 +221,7 @@ npx prisma db push
 1. Visit the homepage
 2. Paste a YouTube URL
 3. Select your preferred:
-   - Language (English/German)
+   - Language (English/Chinese)
    - Summary mode (Video/Podcast)
    - AI model
 4. Click "Generate Summary"
@@ -229,7 +236,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ### Contributors
 
 - **Enrico Carteciano** - Original author and creator of the project
-- **Zherui Qiu** - Added DeepSeek API support, Chinese language option, improved UI components, enhanced YouTube URL handling, and added comprehensive testing
+- **Zherui Qiu** - Added DeepSeek API support, Chinese language option, improved UI components, enhanced YouTube URL handling, fixed duplicate API requests, improved dropdown initialization, and added comprehensive testing
 
 See the [CONTRIBUTORS.md](CONTRIBUTORS.md) file for more details on specific contributions.
 
