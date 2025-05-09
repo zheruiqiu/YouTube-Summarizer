@@ -43,7 +43,7 @@ export default function SummaryPage({ params }: PageProps) {
   const searchParams = useSearchParams()
   const languageCode = searchParams.get("lang") || "en"
   const mode = (searchParams.get("mode") || "video") as "video" | "podcast"
-  const aiModel = (searchParams.get("model") || "gemini") as "gemini" | "groq" | "gpt4"
+  const aiModel = (searchParams.get("model") || "gemini") as "gemini" | "groq" | "gpt4" | "deepseek"
   const { videoUrl } = use(params)
 
   useEffect(() => {

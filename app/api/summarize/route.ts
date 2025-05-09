@@ -5,6 +5,7 @@ import { extractVideoId, createSummaryPrompt } from '@/lib/youtube';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Groq } from "groq-sdk";
 import OpenAI from 'openai';
+import DeepSeek from 'deepseek-api';
 import ytdl from 'ytdl-core';
 import fs from 'fs';
 import path from 'path';
@@ -55,11 +56,18 @@ function getOpenAIClient() {
   return new OpenAI({ apiKey });
 }
 
+function getDeepSeekClient() {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) return null;
+  return new DeepSeek({ apiKey });
+}
+
 // Helper function to get user-friendly model names
 const MODEL_NAMES = {
   gemini: "Google Gemini",
   groq: "Groq",
-  gpt4: "GPT-4"
+  gpt4: "GPT-4",
+  deepseek: "DeepSeek"
 };
 
 // Helper function to check API key availability
@@ -67,7 +75,8 @@ function checkApiKeyAvailability() {
   return {
     gemini: !!process.env.GEMINI_API_KEY,
     groq: !!process.env.GROQ_API_KEY,
-    gpt4: !!process.env.OPENAI_API_KEY
+    gpt4: !!process.env.OPENAI_API_KEY,
+    deepseek: !!process.env.DEEPSEEK_API_KEY
   };
 }
 
@@ -92,9 +101,18 @@ function cleanModelOutput(text: string): string {
     .replace(/^(Hier sind|Folgendes|Dies ist|Im Folgenden).*?:\s*/i, '')
     .replace(/^(Ich werde|Lass mich|Ich helfe|Ich habe strukturiert).*?:\s*/i, '')
     .replace(/^(Wie gewünscht|Entsprechend Ihrer|Als Antwort auf).*?:\s*/i, '')
+    // Chinese prefixes
+    .replace(/^(好的|这是|让我|我将|我会|我能|我想|请允许我|当然|确实|好的)[^]*?,\s*/i, '')
+    .replace(/^(这是|我将|让我|我能|我想)[^]*?(摘要|翻译|分析).*?[:：]\s*/i, '')
+    .replace(/^(基于|根据|按照).*?[,，]\s*/i, '')
+    .replace(/^我理解.*?[.!。！]\s*/i, '')
+    .replace(/^(现在|首先|让我们)[,，]?\s*/i, '')
+    .replace(/^(以下是|这是|下面是).*?[:：]\s*/i, '')
+    .replace(/^(我将提供|让我分析|我将分析|我会帮助|我已经整理)[^]*?[:：]\s*/i, '')
+    .replace(/^(根据您的要求|按照您的|作为对)[^]*?[:：]\s*/i, '')
     // Remove meta instructions while preserving markdown
-    .replace(/^[^:\n🎯🎙️#*\-•]+:\s*/gm, '')  // Remove prefixes but keep markdown and emojis
-    .replace(/^(?![#*\-•🎯️])[\s\d]+\.\s*/gm, '') // Remove numbered lists but keep markdown lists
+    .replace(/^[^:\n🎯🎙️#*\-•]+[:：]\s*/gm, '')  // Remove prefixes but keep markdown and emojis
+    .replace(/^(?![#*\-•🎯️])[\s\d]+[.。]\s*/gm, '') // Remove numbered lists but keep markdown lists
     .trim();
 }
 
@@ -125,7 +143,7 @@ const AI_MODELS = {
         messages: [
           {
             role: "system",
-            content: "You are a direct and concise summarizer. Respond only with the summary, without any prefixes or meta-commentary. Keep all markdown formatting intact."
+            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
           },
           {
             role: "user",
@@ -151,7 +169,33 @@ const AI_MODELS = {
         messages: [
           {
             role: "system",
-            content: "You are a direct and concise summarizer. Respond only with the summary, without any prefixes or meta-commentary. Keep all markdown formatting intact."
+            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        model: this.model,
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return cleanModelOutput(completion.choices[0]?.message?.content || '');
+    }
+  },
+  deepseek: {
+    name: "deepseek",
+    model: "deepseek-chat",
+    async generateContent(prompt: string) {
+      const deepseek = getDeepSeekClient();
+      if (!deepseek) {
+        throw new Error(`${MODEL_NAMES.deepseek} API key is not configured. Please add your API key in the settings or choose a different model.`);
+      }
+      const completion = await deepseek.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
           },
           {
             role: "user",

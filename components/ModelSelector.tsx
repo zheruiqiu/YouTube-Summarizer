@@ -8,24 +8,28 @@ interface ModelAvailability {
   gemini: boolean;
   groq: boolean;
   gpt4: boolean;
+  deepseek: boolean;
 }
 
 const MODEL_NAMES = {
   gemini: "Google Gemini",
   groq: "Groq",
-  gpt4: "GPT-4"
+  gpt4: "GPT-4",
+  deepseek: "DeepSeek"
 };
 
 const MODEL_DESCRIPTIONS = {
   gemini: "Fast and cost-effective, good for general summaries",
   groq: "Very fast, good for long videos",
-  gpt4: "High-quality summaries, slightly slower"
+  gpt4: "High-quality summaries, slightly slower",
+  deepseek: "Powerful Chinese-English bilingual model"
 };
 
 const MODEL_ICONS = {
   gemini: Bot,
   groq: Cpu,
-  gpt4: Bot
+  gpt4: Bot,
+  deepseek: Bot
 };
 
 interface ModelSelectorProps {
