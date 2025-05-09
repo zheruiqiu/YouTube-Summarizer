@@ -1,5 +1,14 @@
 "use client"
 
+/**
+ * Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ */
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 

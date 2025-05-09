@@ -1,5 +1,15 @@
 "use client"
 
+/**
+ * Original work Copyright (c) 2025 Enrico Carteciano
+ * Modified work Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ */
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Youtube, Headphones } from "lucide-react"
@@ -28,11 +38,8 @@ export default function Home() {
 
   // This effect ensures components are properly mounted before being interactive
   useEffect(() => {
-    // Use requestAnimationFrame to ensure we're in the browser environment
-    // and the DOM is fully rendered before setting mounted to true
-    requestAnimationFrame(() => {
-      setMounted(true)
-    })
+    // Set mounted state immediately without requestAnimationFrame delay
+    setMounted(true)
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,11 +76,22 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {mounted ? (
+              {!mounted ? (
+                <>
+                  <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
+                    {language}
+                  </div>
+                  <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
+                    {mode === "video" ? "Video Summary" : "Podcast Style"}
+                  </div>
+                </>
+              ) : (
                 <>
                   <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Language" />
+                      <SelectValue>
+                        {language}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {Object.keys(AVAILABLE_LANGUAGES).map((lang) => (
@@ -86,7 +104,9 @@ export default function Home() {
 
                   <Select value={mode} onValueChange={(value) => setMode(value as "video" | "podcast")}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Mode" />
+                      <SelectValue>
+                        {mode === "video" ? "Video Summary" : "Podcast Style"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="video">
@@ -104,27 +124,18 @@ export default function Home() {
                     </SelectContent>
                   </Select>
                 </>
-              ) : (
-                <>
-                  <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
-                    {language}
-                  </div>
-                  <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
-                    {mode === "video" ? "Video Summary" : "Podcast Style"}
-                  </div>
-                </>
               )}
             </div>
 
-            {mounted ? (
+            {!mounted ? (
+              <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
+                {MODEL_NAMES[aiModel as keyof typeof MODEL_NAMES]}
+              </div>
+            ) : (
               <ModelSelector
                 selectedModel={aiModel}
                 onModelChange={(model) => setAiModel(model as "deepseek" | "gemini" | "groq" | "gpt4")}
               />
-            ) : (
-              <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
-                {MODEL_NAMES[aiModel as keyof typeof MODEL_NAMES]}
-              </div>
             )}
 
             <Button type="submit" className="w-full">

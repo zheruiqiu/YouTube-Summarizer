@@ -1,6 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+/**
+ * Original work Copyright (c) 2025 Enrico Carteciano
+ * Modified work Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ */
+
+import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { AVAILABLE_LANGUAGES } from "@/lib/youtube"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -40,19 +50,43 @@ export default function SummaryPage({ params }: PageProps) {
     message: 'Analyzing video content...'
   })
 
+  // Add a ref to track if a request is in progress
+  const requestInProgressRef = useRef(false)
+  // Add a ref to store the mounted state
+  const isMountedRef = useRef(false)
+
   const searchParams = useSearchParams()
   const languageCode = searchParams.get("lang") || "zh"
   const mode = (searchParams.get("mode") || "video") as "video" | "podcast"
   const aiModel = (searchParams.get("model") || "deepseek") as "deepseek" | "gemini" | "groq" | "gpt4"
   const { videoUrl } = use(params)
 
+  // Add a useEffect to set the mounted flag
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   useEffect(() => {
     const fetchSummary = async () => {
+      // Check if a request is already in progress to prevent duplicate calls
+      if (requestInProgressRef.current) {
+        console.log("[INFO] Skipping duplicate request - a summary request is already in progress")
+        return
+      }
+
+      // Set the request in progress flag
+      requestInProgressRef.current = true
+
       try {
         setLoading(true)
         setError(null)
 
         const url = urlSafeBase64Decode(videoUrl)
+        console.log(`[INFO] Starting summary request for video: ${url}`)
+
         const response = await fetch("/api/summarize", {
           method: "POST",
           headers: {
@@ -81,6 +115,12 @@ export default function SummaryPage({ params }: PageProps) {
           const { done, value } = await reader.read()
           if (done) break
 
+          // Check if component is still mounted
+          if (!isMountedRef.current) {
+            console.log("[INFO] Component unmounted during request, aborting")
+            break
+          }
+
           const chunk = decoder.decode(value)
           try {
             // Split by newlines to handle multiple JSON objects in a single chunk
@@ -100,6 +140,7 @@ export default function SummaryPage({ params }: PageProps) {
                 } else if (data.type === 'complete') {
                   setSummary(data.summary)
                   setSource(data.source)
+                  console.log("[INFO] Summary request completed successfully")
                   break
                 } else if (data.type === 'error') {
                   throw new Error(data.error)
@@ -116,11 +157,20 @@ export default function SummaryPage({ params }: PageProps) {
         console.error("Error fetching summary:", err)
         setError(err instanceof Error ? err.message : "An error occurred while generating the summary")
       } finally {
-        setLoading(false)
+        // Reset the request in progress flag
+        requestInProgressRef.current = false
+
+        // Only update loading state if component is still mounted
+        if (isMountedRef.current) {
+          setLoading(false)
+        }
       }
     }
 
-    fetchSummary()
+    // Only fetch if we have the required parameters
+    if (videoUrl && languageCode && mode && aiModel) {
+      fetchSummary()
+    }
   }, [videoUrl, languageCode, mode, aiModel])
 
   const displayLanguage =

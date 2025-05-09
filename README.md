@@ -226,6 +226,13 @@ npx prisma db push
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+### Contributors
+
+- **Enrico Carteciano** - Original author and creator of the project
+- **Zherui Qiu** - Added DeepSeek API support, Chinese language option, improved UI components, enhanced YouTube URL handling, and added comprehensive testing
+
+See the [CONTRIBUTORS.md](CONTRIBUTORS.md) file for more details on specific contributions.
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

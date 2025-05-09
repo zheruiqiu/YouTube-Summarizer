@@ -1,6 +1,13 @@
 /**
+ * Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ *
  * Test script for the extractVideoId function
- * 
+ *
  * This script tests the ability to extract video IDs from various YouTube URL formats,
  * including URLs with time parameters (e.g., &t=16s).
  */
@@ -17,7 +24,7 @@ function extractVideoId(youtube_url) {
   // First, try to extract video ID using URL object for standard URLs
   try {
     const url = new URL(youtube_url.trim());
-    
+
     // Handle standard youtube.com URLs
     if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
       // For standard watch URLs: youtube.com/watch?v=VIDEO_ID
@@ -27,7 +34,7 @@ function extractVideoId(youtube_url) {
           return videoId;
         }
       }
-      
+
       // For shortened URLs: youtu.be/VIDEO_ID
       if (url.hostname === 'youtu.be') {
         const videoId = url.pathname.substring(1); // Remove leading slash
@@ -35,7 +42,7 @@ function extractVideoId(youtube_url) {
           return videoId;
         }
       }
-      
+
       // For embed URLs: youtube.com/embed/VIDEO_ID
       if (url.pathname.includes('/embed/')) {
         const parts = url.pathname.split('/');
@@ -44,7 +51,7 @@ function extractVideoId(youtube_url) {
           return videoId;
         }
       }
-      
+
       // For shorts URLs: youtube.com/shorts/VIDEO_ID
       if (url.pathname.includes('/shorts/')) {
         const parts = url.pathname.split('/');
@@ -58,7 +65,7 @@ function extractVideoId(youtube_url) {
     // If URL parsing fails, fall back to regex patterns
     console.log("URL parsing failed, falling back to regex patterns");
   }
-  
+
   // Fall back to regex patterns for cases where URL parsing fails
   const patterns = [
     /(?:v=)([0-9A-Za-z_-]{11})(?:&|$)/,     // Standard URLs with query params
@@ -87,6 +94,8 @@ const testUrls = [
   // URLs with time parameters
   'https://www.youtube.com/watch?v=odXXUT1wkzw&t=16s',
   'https://www.youtube.com/watch?v=odXXUT1wkzw&t=1h2m3s',
+  // Specific problematic URL format from user report
+  'https://www.youtube.com/watch?v=SSA8vNrFpXI&t=2325s',
   // URLs with multiple parameters
   'https://www.youtube.com/watch?v=odXXUT1wkzw&t=16s&list=PLxyz',
   'https://www.youtube.com/watch?list=PLxyz&v=odXXUT1wkzw&t=16s',

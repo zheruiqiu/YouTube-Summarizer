@@ -1,5 +1,15 @@
 'use client';
 
+/**
+ * Original work Copyright (c) 2025 Enrico Carteciano
+ * Modified work Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ */
+
 import { useEffect, useState } from 'react';
 import { Bot, Cpu, CheckCircle2, XCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,38 +56,58 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
     // Set mounted state immediately
     setMounted(true);
 
+    // Separate the API call from the mounted state setting
+    let isMounted = true; // For cleanup
+
     async function fetchModelAvailability() {
       try {
         const response = await fetch('/api/summarize');
         const data = await response.json();
-        setModelAvailability(data);
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setModelAvailability(data);
+        }
       } catch (error) {
         console.error('Failed to fetch model availability:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchModelAvailability();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Show loading state when data is being fetched
-  if (isLoading && mounted) {
-    return (
-      <Select disabled>
-        <SelectTrigger>
-          <SelectValue placeholder="Loading models..." />
-        </SelectTrigger>
-      </Select>
-    );
-  }
-
-  // Show static placeholder during initial render (before hydration)
+  // During server-side rendering or before hydration, show a non-interactive element
   if (!mounted) {
     return (
       <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
         {MODEL_NAMES[selectedModel as keyof typeof MODEL_NAMES]}
       </div>
+    );
+  }
+
+  // After hydration, show a proper Select component, even if still loading
+  if (isLoading) {
+    return (
+      <Select value={selectedModel} disabled>
+        <SelectTrigger>
+          <SelectValue>
+            {MODEL_NAMES[selectedModel as keyof typeof MODEL_NAMES]}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={selectedModel}>
+            Loading models...
+          </SelectItem>
+        </SelectContent>
+      </Select>
     );
   }
 

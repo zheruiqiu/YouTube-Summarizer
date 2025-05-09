@@ -1,5 +1,7 @@
 # Tests
 
+Copyright (c) 2025 Zherui Qiu
+
 This directory contains test scripts for the YouTube Video Summarizer application.
 
 ## Available Tests

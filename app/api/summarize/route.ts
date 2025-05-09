@@ -1,3 +1,13 @@
+/**
+ * Original work Copyright (c) 2025 Enrico Carteciano
+ * Modified work Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ */
+
 import { NextResponse } from "next/server";
 import { YoutubeTranscript } from 'youtube-transcript';
 import { prisma } from "@/lib/prisma";
@@ -301,8 +311,10 @@ async function downloadAudio(videoId: string): Promise<string> {
 
     // First download the audio
     await new Promise<void>((resolve, reject) => {
+      // Ensure we have a clean video ID without any parameters (must be exactly 11 characters)
+      const cleanVideoId = videoId.length === 11 ? videoId : extractVideoId(videoId);
       // Create a clean URL with just the video ID, no timestamp or other parameters
-      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      const videoUrl = `https://www.youtube.com/watch?v=${cleanVideoId}`;
       logger.debug(`Downloading from URL: ${videoUrl}`);
 
       // Get video info first
@@ -499,9 +511,13 @@ async function transcribeWithWhisper(audioPath: string): Promise<string> {
 
 async function getTranscript(videoId: string): Promise<{ transcript: string; source: 'youtube' | 'whisper'; title: string }> {
   try {
-    logger.info(`Attempting to fetch YouTube transcript for video ${videoId}`);
-    // First try YouTube transcripts - use clean video ID without any parameters
-    const transcriptList = await YoutubeTranscript.fetchTranscript(videoId);
+    // Ensure we have a clean video ID without any parameters (must be exactly 11 characters)
+    // This is crucial for the YouTube transcript API which doesn't handle URLs with timestamps
+    const cleanVideoId = videoId.length === 11 ? videoId : extractVideoId(videoId);
+
+    logger.info(`Attempting to fetch YouTube transcript for video ${cleanVideoId}`);
+    // Use clean video ID without any parameters
+    const transcriptList = await YoutubeTranscript.fetchTranscript(cleanVideoId);
 
     // Extract title and process transcript as before
     const firstFewLines = transcriptList.slice(0, 5).map(item => item.text).join(' ');
@@ -532,9 +548,11 @@ async function getTranscript(videoId: string): Promise<{ transcript: string; sou
     });
 
     try {
-      // Get video info for title
+      // Get video info for title - ensure we have a clean video ID
       logger.info('Fetching video info from YouTube');
-      const videoInfo = await ytdl.getInfo(videoId).catch(infoError => {
+      // Make sure we're using a clean video ID without any parameters
+      const cleanVideoId = videoId.length === 11 ? videoId : extractVideoId(videoId);
+      const videoInfo = await ytdl.getInfo(cleanVideoId).catch(infoError => {
         logger.error('Failed to get video info:', {
           error: infoError instanceof Error ? {
             message: infoError.message,
@@ -603,6 +621,9 @@ export async function GET() {
   return NextResponse.json(checkApiKeyAvailability());
 }
 
+// Track active requests to prevent duplicate processing
+const activeRequests = new Map<string, boolean>();
+
 export async function POST(req: Request) {
   const encoder = new TextEncoder();
   const stream = new TransformStream();
@@ -613,15 +634,47 @@ export async function POST(req: Request) {
   };
 
   (async () => {
+    // Generate a unique request ID to track this request
+    let requestId = '';
+
     try {
       const { url, language, mode, aiModel = 'deepseek' } = await req.json();
       const videoId = extractVideoId(url);
+
+      // Create a unique request ID based on the parameters
+      requestId = `${videoId}-${language}-${mode}-${aiModel}`;
+
+      // Check if this exact request is already being processed
+      if (activeRequests.has(requestId)) {
+        logger.info(`Duplicate request detected: ${requestId}. A similar request is already being processed.`);
+        await writeProgress({
+          type: 'progress',
+          currentChunk: 0,
+          totalChunks: 1,
+          stage: 'analyzing',
+          message: 'Another request for this video is already in progress. Please wait...'
+        });
+
+        // Return early with an informative message
+        await writeProgress({
+          type: 'error',
+          error: 'Duplicate request',
+          details: 'This video is already being processed in another tab or window. Please wait for that request to complete or refresh the page.'
+        });
+
+        await writer.close();
+        return;
+      }
+
+      // Mark this request as active
+      activeRequests.set(requestId, true);
 
       logger.info('Processing video request', {
         videoId,
         language,
         mode,
-        aiModel
+        aiModel,
+        requestId
       });
 
       if (!AI_MODELS[aiModel as keyof typeof AI_MODELS]) {
@@ -799,7 +852,8 @@ export async function POST(req: Request) {
       logger.error('Error processing video:', {
         error,
         stack: error?.stack,
-        cause: error?.cause
+        cause: error?.cause,
+        requestId
       });
 
       // Determine if this is a DeepSeek API error
@@ -825,6 +879,12 @@ export async function POST(req: Request) {
         logger.error('Failed to write error progress:', writeError);
       });
     } finally {
+      // Remove this request from active requests
+      if (requestId) {
+        activeRequests.delete(requestId);
+        logger.info(`Request ${requestId} completed and removed from active requests`);
+      }
+
       await writer.close().catch((closeError) => {
         logger.error('Failed to close writer:', closeError);
       });

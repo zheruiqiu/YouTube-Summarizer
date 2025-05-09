@@ -1,4 +1,12 @@
 /**
+ * Original work Copyright (c) 2025 Enrico Carteciano
+ * Modified work Copyright (c) 2025 Zherui Qiu
+ *
+ * This file is part of YouTube AI Summarizer.
+ *
+ * YouTube AI Summarizer is free software: you can redistribute it and/or modify
+ * it under the terms of the MIT License.
+ *
  * Extracts the YouTube video ID from various URL formats.
  * Handles standard URLs, URLs with time parameters (e.g., &t=16s),
  * shortened URLs (youtu.be), embed URLs, and shorts URLs.
