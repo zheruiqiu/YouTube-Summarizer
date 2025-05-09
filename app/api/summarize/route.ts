@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { YoutubeTranscript } from 'youtube-transcript';
 import { prisma } from "@/lib/prisma";
 import { extractVideoId, createSummaryPrompt } from '@/lib/youtube';
+import { srtToText } from '@/lib/srt';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Groq } from "groq-sdk";
 import OpenAI from 'openai';
@@ -509,7 +510,98 @@ async function transcribeWithWhisper(audioPath: string): Promise<string> {
   }
 }
 
-async function getTranscript(videoId: string): Promise<{ transcript: string; source: 'youtube' | 'whisper'; title: string }> {
+async function getSrtTranscript(srtId: string): Promise<{ transcript: string; source: 'srt'; title: string }> {
+  try {
+    // Check if the srtId is already in the format "srt:fileId:filename"
+    let fileId: string;
+    let originalFilename: string;
+
+    if (srtId.startsWith('srt:')) {
+      // Already in the correct format, no need to decode
+      const parts = srtId.split(':');
+      if (parts.length < 3) {
+        throw new Error('Invalid SRT ID format');
+      }
+      fileId = parts[1];
+      originalFilename = parts.slice(2).join(':'); // In case filename had colons
+    } else {
+      // Try to decode from base64
+      try {
+        // Add padding if needed
+        const paddedId = srtId.replace(/-/g, "+").replace(/_/g, "/");
+        const pad = paddedId.length % 4;
+        const paddedBase64 = pad ? paddedId + "=".repeat(4 - pad) : paddedId;
+
+        const decodedId = atob(paddedBase64);
+        const parts = decodedId.split(':');
+
+        if (parts.length < 3 || parts[0] !== 'srt') {
+          throw new Error('Invalid SRT ID format');
+        }
+
+        fileId = parts[1];
+        originalFilename = parts.slice(2).join(':'); // In case filename had colons
+      } catch (decodeError) {
+        logger.error('Error decoding SRT ID:', {
+          error: decodeError instanceof Error ? {
+            message: decodeError.message,
+            stack: decodeError.stack
+          } : decodeError,
+          srtId
+        });
+        throw new Error(`Failed to decode SRT ID: ${decodeError instanceof Error ? decodeError.message : String(decodeError)}`);
+      }
+    }
+
+    // Construct the path to the SRT file
+    const filePath = path.join(process.cwd(), 'tmp', `${fileId}.srt`);
+
+    // Check if the file exists
+    if (!fs.existsSync(filePath)) {
+      throw new Error('SRT file not found. It may have been deleted or expired.');
+    }
+
+    // Read the SRT file
+    const srtContent = await fs.promises.readFile(filePath, 'utf-8');
+
+    // Parse the SRT content to plain text
+    const transcript = srtToText(srtContent);
+
+    // Use the original filename as the title, without the .srt extension
+    let title = originalFilename.replace(/\.srt$/i, '');
+
+    // Limit title length
+    if (title.length > 100) {
+      title = title.substring(0, 97) + '...';
+    }
+    if (title.length < 10) {
+      title = 'SRT Subtitle Summary';
+    }
+
+    logger.info('Successfully processed SRT file', {
+      fileId,
+      originalFilename,
+      transcriptLength: transcript.length
+    });
+
+    return {
+      transcript,
+      source: 'srt',
+      title
+    };
+  } catch (error) {
+    logger.error('Failed to process SRT file:', {
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack
+      } : error,
+      srtId
+    });
+    throw new Error(`Failed to process SRT file: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function getTranscript(videoId: string): Promise<{ transcript: string; source: 'youtube' | 'whisper' | 'srt'; title: string }> {
   try {
     // Ensure we have a clean video ID without any parameters (must be exactly 11 characters)
     // This is crucial for the YouTube transcript API which doesn't handle URLs with timestamps
@@ -638,8 +730,23 @@ export async function POST(req: Request) {
     let requestId = '';
 
     try {
-      const { url, language, mode, aiModel = 'deepseek' } = await req.json();
-      const videoId = extractVideoId(url);
+      const data = await req.json();
+      const { language, mode, aiModel = 'deepseek' } = data;
+      const url = data.url || '';
+      const srtId = data.srtId || '';
+
+      let videoId = '';
+      let isSrtFile = false;
+
+      // Check if this is an SRT file request
+      if (srtId && srtId.startsWith('srt')) {
+        videoId = srtId; // Use the SRT ID as the video ID for caching
+        isSrtFile = true;
+      } else if (url) {
+        videoId = extractVideoId(url);
+      } else {
+        throw new Error('Either a YouTube URL or SRT file ID must be provided');
+      }
 
       // Create a unique request ID based on the parameters
       requestId = `${videoId}-${language}-${mode}-${aiModel}`;
@@ -709,10 +816,24 @@ export async function POST(req: Request) {
         currentChunk: 0,
         totalChunks: 1,
         stage: 'analyzing',
-        message: 'Fetching video transcript...'
+        message: isSrtFile ? 'Processing SRT file...' : 'Fetching video transcript...'
       });
 
-      const { transcript, source, title } = await getTranscript(videoId);
+      let transcript, source, title;
+
+      if (isSrtFile) {
+        // Process SRT file
+        const srtResult = await getSrtTranscript(srtId);
+        transcript = srtResult.transcript;
+        source = srtResult.source;
+        title = srtResult.title;
+      } else {
+        // Process YouTube video
+        const videoResult = await getTranscript(videoId);
+        transcript = videoResult.transcript;
+        source = videoResult.source;
+        title = videoResult.title;
+      }
       const chunks = await splitTranscriptIntoChunks(transcript);
       const totalChunks = chunks.length;
       const intermediateSummaries = [];

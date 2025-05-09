@@ -10,15 +10,16 @@
  * it under the terms of the MIT License.
  */
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Youtube, Headphones } from "lucide-react"
+import { Youtube, Headphones, FileText, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AVAILABLE_LANGUAGES, extractVideoId } from "@/lib/youtube"
 import { ModelSelector } from "@/components/ModelSelector"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Import model names for the fallback display
 const MODEL_NAMES = {
@@ -34,6 +35,10 @@ export default function Home() {
   const [mode, setMode] = useState<"video" | "podcast">("video")
   const [aiModel, setAiModel] = useState<"deepseek" | "gemini" | "groq" | "gpt4">("deepseek")
   const [mounted, setMounted] = useState(false)
+  const [inputType, setInputType] = useState<"url" | "srt">("url")
+  const [srtFile, setSrtFile] = useState<File | null>(null)
+  const [srtFileName, setSrtFileName] = useState<string>("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   // This effect ensures components are properly mounted before being interactive
@@ -45,14 +50,68 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    try {
-      const videoId = extractVideoId(url)
-      const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`
-      const encodedUrl = btoa(cleanUrl).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
-      const summaryUrl = `/summary/${encodedUrl}?lang=${AVAILABLE_LANGUAGES[language as keyof typeof AVAILABLE_LANGUAGES]}&mode=${mode}&model=${aiModel}`
-      router.push(summaryUrl)
-    } catch (error) {
-      alert("Invalid YouTube URL. Please enter a valid YouTube URL.")
+    if (inputType === "url") {
+      try {
+        const videoId = extractVideoId(url)
+        const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`
+        const encodedUrl = btoa(cleanUrl).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+        const summaryUrl = `/summary/${encodedUrl}?lang=${AVAILABLE_LANGUAGES[language as keyof typeof AVAILABLE_LANGUAGES]}&mode=${mode}&model=${aiModel}`
+        router.push(summaryUrl)
+      } catch (error) {
+        alert("Invalid YouTube URL. Please enter a valid YouTube URL.")
+      }
+    } else if (inputType === "srt" && srtFile) {
+      // Create a FormData object to send the file
+      const formData = new FormData()
+      formData.append("srtFile", srtFile)
+      formData.append("language", AVAILABLE_LANGUAGES[language as keyof typeof AVAILABLE_LANGUAGES])
+      formData.append("mode", mode)
+      formData.append("aiModel", aiModel)
+      formData.append("fileName", srtFileName)
+
+      try {
+        // Upload the SRT file first
+        const uploadResponse = await fetch("/api/upload-srt", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json()
+          throw new Error(errorData.error || "Failed to upload SRT file")
+        }
+
+        const { id } = await uploadResponse.json()
+
+        if (!id) {
+          throw new Error("No ID returned from server after uploading SRT file")
+        }
+
+        // Navigate to the summary page with the SRT ID
+        // We're using encodeURIComponent to safely include the SRT ID in the URL
+        const summaryUrl = `/summary/${encodeURIComponent(id)}?lang=${AVAILABLE_LANGUAGES[language as keyof typeof AVAILABLE_LANGUAGES]}&mode=${mode}&model=${aiModel}&source=srt`
+        router.push(summaryUrl)
+      } catch (error) {
+        alert(`Error uploading SRT file: ${error instanceof Error ? error.message : "Unknown error"}`)
+      }
+    } else {
+      alert("Please select an SRT file to upload.")
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      if (file.name.toLowerCase().endsWith('.srt')) {
+        setSrtFile(file)
+        setSrtFileName(file.name)
+      } else {
+        alert("Please select a valid SRT file (with .srt extension)")
+        e.target.value = ""
+        setSrtFile(null)
+        setSrtFileName("")
+      }
     }
   }
 
@@ -61,19 +120,52 @@ export default function Home() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center">YouTube AI Summarizer</CardTitle>
-          <CardDescription className="text-center">Enter a YouTube URL to get an AI-generated summary</CardDescription>
+          <CardDescription className="text-center">Enter a YouTube URL or upload an SRT file to get an AI-generated summary</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value.replace(/^@/, ""))}
-                placeholder="https://youtube.com/watch?v=..."
-                required
-              />
-            </div>
+            <Tabs defaultValue="url" onValueChange={(value) => setInputType(value as "url" | "srt")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="url" className="flex items-center">
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  YouTube URL
+                </TabsTrigger>
+                <TabsTrigger value="srt" className="flex items-center">
+                  <FileText className="mr-2 h-4 w-4" />
+                  SRT File
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="url" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value.replace(/^@/, ""))}
+                    placeholder="https://youtube.com/watch?v=..."
+                    required={inputType === "url"}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="srt" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".srt"
+                    onChange={handleFileChange}
+                    required={inputType === "srt"}
+                    className="cursor-pointer"
+                  />
+                  {srtFileName && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Selected file: {srtFileName}
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <div className="grid grid-cols-2 gap-4">
               {!mounted ? (

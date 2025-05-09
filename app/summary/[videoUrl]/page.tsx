@@ -16,7 +16,7 @@ import { AVAILABLE_LANGUAGES } from "@/lib/youtube"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Youtube, Headphones, Subtitles, Bot, Archive } from "lucide-react"
+import { Youtube, Headphones, Subtitles, Bot, Archive, FileText } from "lucide-react"
 import { use } from "react"
 import ReactMarkdown from 'react-markdown'
 
@@ -28,10 +28,21 @@ interface ProcessingStatus {
 }
 
 function urlSafeBase64Decode(str: string): string {
-  const base64 = str.replace(/-/g, "+").replace(/_/g, "/")
-  const pad = base64.length % 4
-  const paddedBase64 = pad ? base64 + "=".repeat(4 - pad) : base64
-  return atob(paddedBase64)
+  try {
+    // If the string already contains colons, it might be an unencoded SRT ID
+    if (str.includes(':')) {
+      return str
+    }
+
+    const base64 = str.replace(/-/g, "+").replace(/_/g, "/")
+    const pad = base64.length % 4
+    const paddedBase64 = pad ? base64 + "=".repeat(4 - pad) : base64
+    return atob(paddedBase64)
+  } catch (error) {
+    console.error("Error in base64 decoding:", error)
+    // Return the original string if decoding fails
+    return str
+  }
 }
 
 interface PageProps {
@@ -40,7 +51,7 @@ interface PageProps {
 
 export default function SummaryPage({ params }: PageProps) {
   const [summary, setSummary] = useState<string>("")
-  const [source, setSource] = useState<"youtube" | "cache" | null>(null)
+  const [source, setSource] = useState<"youtube" | "cache" | "srt" | "whisper" | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<ProcessingStatus>({
@@ -59,6 +70,7 @@ export default function SummaryPage({ params }: PageProps) {
   const languageCode = searchParams.get("lang") || "zh"
   const mode = (searchParams.get("mode") || "video") as "video" | "podcast"
   const aiModel = (searchParams.get("model") || "deepseek") as "deepseek" | "gemini" | "groq" | "gpt4"
+  const sourceParam = searchParams.get("source") || ""
   const { videoUrl } = use(params)
 
   // Add a useEffect to set the mounted flag
@@ -84,20 +96,45 @@ export default function SummaryPage({ params }: PageProps) {
         setLoading(true)
         setError(null)
 
-        const url = urlSafeBase64Decode(videoUrl)
-        console.log(`[INFO] Starting summary request for video: ${url}`)
+        // First try to decode from URL encoding
+        let decodedUrl: string;
+        try {
+          // First try to decode from URL encoding (for SRT files)
+          decodedUrl = decodeURIComponent(videoUrl);
+
+          // If it's not an SRT file, try base64 decoding
+          if (!decodedUrl.startsWith("srt:")) {
+            decodedUrl = urlSafeBase64Decode(videoUrl);
+          }
+        } catch (error) {
+          console.error("Error decoding URL:", error);
+          // If decoding fails, use the raw URL
+          decodedUrl = videoUrl;
+        }
+
+        const isSrtFile = sourceParam === "srt" || decodedUrl.startsWith("srt:");
+
+        console.log(`[INFO] Starting summary request for ${isSrtFile ? 'SRT file' : 'video'}: ${decodedUrl}`)
+
+        // Prepare request body based on source type
+        const requestBody: any = {
+          language: languageCode,
+          mode,
+          aiModel
+        }
+
+        if (isSrtFile) {
+          requestBody.srtId = decodedUrl
+        } else {
+          requestBody.url = decodedUrl
+        }
 
         const response = await fetch("/api/summarize", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            url,
-            language: languageCode,
-            mode,
-            aiModel
-          }),
+          body: JSON.stringify(requestBody),
         })
 
         if (!response.ok) {
@@ -180,6 +217,10 @@ export default function SummaryPage({ params }: PageProps) {
     switch (source) {
       case "youtube":
         return <Subtitles className="h-4 w-4" />
+      case "srt":
+        return <FileText className="h-4 w-4" />
+      case "whisper":
+        return <Bot className="h-4 w-4" />
       case "cache":
         return <Archive className="h-4 w-4" />
       default:
@@ -191,6 +232,10 @@ export default function SummaryPage({ params }: PageProps) {
     switch (source) {
       case "youtube":
         return "YouTube subtitles"
+      case "srt":
+        return "SRT file"
+      case "whisper":
+        return "Audio transcription"
       case "cache":
         return "Cached summary"
       default:
