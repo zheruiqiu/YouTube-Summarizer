@@ -17,13 +17,20 @@ import { v4 as uuidv4 } from "uuid";
 const TMP_DIR = join(process.cwd(), "tmp");
 
 export async function POST(req: NextRequest) {
+  console.log("SRT upload API called");
   try {
     // Ensure the tmp directory exists
     await mkdir(TMP_DIR, { recursive: true });
+    console.log("Temporary directory ensured:", TMP_DIR);
 
     const formData = await req.formData();
+    console.log("Form data received, keys:", Array.from(formData.keys()));
+
     const srtFile = formData.get("srtFile") as File;
     const youtubeId = formData.get("youtubeId") as string;
+
+    console.log("SRT file received:", srtFile ? srtFile.name : "none");
+    console.log("YouTube ID received:", youtubeId);
 
     if (!srtFile) {
       return NextResponse.json(
@@ -52,21 +59,34 @@ export async function POST(req: NextRequest) {
     const fileId = uuidv4();
     const fileName = `${fileId}.srt`;
     const filePath = join(TMP_DIR, fileName);
+    console.log("Generated file ID:", fileId);
+    console.log("File will be saved at:", filePath);
 
-    // Convert the file to a Buffer and write it to disk
-    const fileBuffer = Buffer.from(await srtFile.arrayBuffer());
-    await writeFile(filePath, fileBuffer);
+    try {
+      // Convert the file to a Buffer and write it to disk
+      const fileBuffer = Buffer.from(await srtFile.arrayBuffer());
+      await writeFile(filePath, fileBuffer);
+      console.log("File successfully written to disk");
+    } catch (writeError) {
+      console.error("Error writing file to disk:", writeError);
+      throw writeError;
+    }
 
     // Create the SRT ID in plain format (no encoding)
     // Include the YouTube ID in the SRT ID format
     const srtId = `srt:${fileId}:${youtubeId}:${srtFile.name}`;
+    console.log("Generated SRT ID:", srtId);
 
-    // Return the file ID to be used in the summary route
-    return NextResponse.json({
+    // Prepare response object
+    const responseObj = {
       success: true,
       id: srtId,
       youtubeId: youtubeId
-    });
+    };
+    console.log("Sending response:", responseObj);
+
+    // Return the file ID to be used in the summary route
+    return NextResponse.json(responseObj);
   } catch (error) {
     console.error("Error uploading SRT file:", error);
     return NextResponse.json(
