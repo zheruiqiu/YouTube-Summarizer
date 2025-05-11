@@ -36,23 +36,23 @@ A modern Next.js application for AI-powered YouTube video summarization. This ap
 ## 📱 Interface & Workflow
 
 ### 1. Home Screen
-![Home Screen](1home.png)
+![Home Screen](images/1home.png)
 The main interface where users can input a YouTube URL and select their preferred language, summary type, and AI model.
 
 ### 2. Generation Process
-![Generating Summary](2generating-summary.png)
+![Generating Summary](images/2generating-summary.png)
 Real-time progress tracking shows the current status of your summary generation, including processing stages and completion percentage.
 
 ### 3. Summary View
-![Video Summary](3video-summary.png)
+![Video Summary](images/3video-summary.png)
 The generated summary is displayed in a clean, well-structured format with an overview and key points from the video.
 
 ### 4. History Dashboard
-![Summary History Dashboard](4summary-history-dashboard.png)
+![Summary History Dashboard](images/4summary-history-dashboard.png)
 Access your previously generated summaries through the history dashboard, showing video titles and generation dates.
 
 ### 5. Detailed History View
-![Summary History Detail](5summary-history.png)
+![Summary History Detail](images/5summary-history.png)
 View complete details of past summaries, including full analysis and key points.
 
 ## 🚀 Getting Started
