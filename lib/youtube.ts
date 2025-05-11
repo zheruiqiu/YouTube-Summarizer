@@ -149,7 +149,8 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
     2. Maintain the exact format structure with section headers
     3. Do not add any prefixes or meta-commentary
     4. If writing in Chinese, ensure proper formatting with emojis followed by Chinese section headers
-    5. Ensure the summary is comprehensive enough for someone who hasn't seen the original content`;
+    5. Ensure the summary is comprehensive enough for someone who hasn't seen the original content
+    6. Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content`;
   }
 
   return `Please provide a detailed summary of the following content in ${targetLanguage}.
@@ -191,5 +192,6 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
   2. Maintain the exact format structure with section headers
   3. Do not add any prefixes or meta-commentary
   4. If writing in Chinese, ensure proper formatting with emojis followed by Chinese section headers
-  5. Ensure the summary is comprehensive enough for someone who hasn't seen the original content`;
+  5. Ensure the summary is comprehensive enough for someone who hasn't seen the original content
+  6. Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content`;
 }
