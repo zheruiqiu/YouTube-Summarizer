@@ -62,9 +62,27 @@ export default function Home() {
         alert("Invalid YouTube URL. Please enter a valid YouTube URL.")
       }
     } else if (inputType === "srt" && srtFile) {
-      // Validate YouTube ID
-      if (!youtubeId || youtubeId.length !== 11) {
-        alert("Please enter a valid YouTube video ID (11 characters)");
+      // Validate and process YouTube ID or URL
+      if (!youtubeId) {
+        alert("Please enter a YouTube video ID or URL");
+        return;
+      }
+
+      let validVideoId: string;
+
+      try {
+        // Check if input is a URL or just a video ID
+        if (youtubeId.includes('youtube.com') || youtubeId.includes('youtu.be')) {
+          // It's a URL, extract the video ID
+          validVideoId = extractVideoId(youtubeId);
+        } else if (youtubeId.match(/^[a-zA-Z0-9_-]{11}$/)) {
+          // It's already a valid 11-character video ID
+          validVideoId = youtubeId;
+        } else {
+          throw new Error("Invalid YouTube video ID format");
+        }
+      } catch (error) {
+        alert("Please enter a valid YouTube video ID or URL");
         return;
       }
 
@@ -75,7 +93,7 @@ export default function Home() {
       formData.append("mode", mode)
       formData.append("aiModel", aiModel)
       formData.append("fileName", srtFileName)
-      formData.append("youtubeId", youtubeId)
+      formData.append("youtubeId", validVideoId)
 
       try {
         // Upload the SRT file first
@@ -173,19 +191,18 @@ export default function Home() {
                   )}
                   <div className="mt-3">
                     <label className="text-sm font-medium mb-1 block">
-                      YouTube Video ID (11 characters)
+                      YouTube Video ID or URL
                     </label>
                     <Input
                       type="text"
                       value={youtubeId}
                       onChange={(e) => setYoutubeId(e.target.value.trim())}
-                      placeholder="dQw4w9WgXcQ"
+                      placeholder="dQw4w9WgXcQ or https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                       required={inputType === "srt"}
-                      pattern="[a-zA-Z0-9_-]{11}"
-                      title="Please enter a valid YouTube video ID (11 characters)"
+                      title="Please enter a valid YouTube video ID or URL"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Enter the YouTube video ID that corresponds to this SRT file
+                      Enter the YouTube video ID or full URL that corresponds to this SRT file
                     </p>
                   </div>
                 </div>

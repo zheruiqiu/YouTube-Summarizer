@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!youtubeId || youtubeId.length !== 11) {
+    // YouTube video ID should be exactly 11 characters
+    if (!youtubeId || youtubeId.length !== 11 || !youtubeId.match(/^[a-zA-Z0-9_-]{11}$/)) {
       return NextResponse.json(
         { error: "Valid YouTube video ID is required (11 characters)" },
         { status: 400 }
