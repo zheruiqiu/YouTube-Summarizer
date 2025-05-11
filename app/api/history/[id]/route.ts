@@ -16,18 +16,26 @@ function extractTitleFromContent(content: string): string {
     // Look for title in different formats
     for (const line of lines) {
       const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('🎯 TITLE:') ||
-          trimmedLine.startsWith('🎯 TITEL:') ||
-          trimmedLine.startsWith('🎙️ TITLE:') ||
-          trimmedLine.startsWith('🎙️ TITEL:')) {
-        const title = trimmedLine.split(':')[1].trim();
-        if (title) return title;
+      // Check for title markers with emojis
+      if (trimmedLine.includes('TITLE:') || trimmedLine.includes('TITEL:')) {
+        // Split by colon and get the title part
+        const titleParts = trimmedLine.split(':');
+        if (titleParts.length > 1) {
+          const title = titleParts.slice(1).join(':').trim();
+          // Remove "标题" text if present at the beginning
+          const cleanTitle = title.replace(/^(标题|TITLE|TITEL)\s*[:：]?\s*/i, '');
+          if (cleanTitle) return cleanTitle;
+        }
       }
     }
     // Fallback: Use first non-empty line if no title marker found
     const firstNonEmptyLine = lines.find(line => line.trim().length > 0);
     if (firstNonEmptyLine) {
-      return firstNonEmptyLine.trim().replace(/^[🎯🎙️]\s*/, '');
+      // Remove any emoji, leading spaces, and "标题" text
+      const cleanLine = firstNonEmptyLine.trim()
+        .replace(/^[\u{1F300}-\u{1F6FF}\u{2600}-\u{26FF}]\s*/u, '')
+        .replace(/^(标题|TITLE|TITEL)\s*[:：]?\s*/i, '');
+      return cleanLine;
     }
   } catch (error) {
     console.error('Error extracting title:', error);

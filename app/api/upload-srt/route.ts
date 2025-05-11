@@ -23,10 +23,18 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const srtFile = formData.get("srtFile") as File;
+    const youtubeId = formData.get("youtubeId") as string;
 
     if (!srtFile) {
       return NextResponse.json(
         { error: "No SRT file provided" },
+        { status: 400 }
+      );
+    }
+
+    if (!youtubeId || youtubeId.length !== 11) {
+      return NextResponse.json(
+        { error: "Valid YouTube video ID is required (11 characters)" },
         { status: 400 }
       );
     }
@@ -49,12 +57,14 @@ export async function POST(req: NextRequest) {
     await writeFile(filePath, fileBuffer);
 
     // Create the SRT ID in plain format (no encoding)
-    const srtId = `srt:${fileId}:${srtFile.name}`;
+    // Include the YouTube ID in the SRT ID format
+    const srtId = `srt:${fileId}:${youtubeId}:${srtFile.name}`;
 
     // Return the file ID to be used in the summary route
     return NextResponse.json({
       success: true,
-      id: srtId
+      id: srtId,
+      youtubeId: youtubeId
     });
   } catch (error) {
     console.error("Error uploading SRT file:", error);

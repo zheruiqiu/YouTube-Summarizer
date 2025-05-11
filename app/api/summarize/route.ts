@@ -510,20 +510,29 @@ async function transcribeWithWhisper(audioPath: string): Promise<string> {
   }
 }
 
-async function getSrtTranscript(srtId: string): Promise<{ transcript: string; source: 'srt'; title: string }> {
+async function getSrtTranscript(srtId: string): Promise<{ transcript: string; source: 'srt'; title: string; youtubeId?: string }> {
   try {
-    // Check if the srtId is already in the format "srt:fileId:filename"
+    // Check if the srtId is already in the format "srt:fileId:youtubeId:filename"
     let fileId: string;
+    let youtubeId: string | undefined;
     let originalFilename: string;
 
     if (srtId.startsWith('srt:')) {
       // Already in the correct format, no need to decode
       const parts = srtId.split(':');
-      if (parts.length < 3) {
-        throw new Error('Invalid SRT ID format');
+      if (parts.length < 4) {
+        // Old format or invalid format
+        if (parts.length < 3) {
+          throw new Error('Invalid SRT ID format');
+        }
+        fileId = parts[1];
+        originalFilename = parts.slice(2).join(':'); // In case filename had colons
+      } else {
+        // New format with YouTube ID
+        fileId = parts[1];
+        youtubeId = parts[2];
+        originalFilename = parts.slice(3).join(':'); // In case filename had colons
       }
-      fileId = parts[1];
-      originalFilename = parts.slice(2).join(':'); // In case filename had colons
     } else {
       // Try to decode from base64
       try {
@@ -540,7 +549,15 @@ async function getSrtTranscript(srtId: string): Promise<{ transcript: string; so
         }
 
         fileId = parts[1];
-        originalFilename = parts.slice(2).join(':'); // In case filename had colons
+
+        if (parts.length >= 4) {
+          // New format with YouTube ID
+          youtubeId = parts[2];
+          originalFilename = parts.slice(3).join(':'); // In case filename had colons
+        } else {
+          // Old format without YouTube ID
+          originalFilename = parts.slice(2).join(':'); // In case filename had colons
+        }
       } catch (decodeError) {
         logger.error('Error decoding SRT ID:', {
           error: decodeError instanceof Error ? {
@@ -587,7 +604,8 @@ async function getSrtTranscript(srtId: string): Promise<{ transcript: string; so
     return {
       transcript,
       source: 'srt',
-      title
+      title,
+      youtubeId
     };
   } catch (error) {
     logger.error('Failed to process SRT file:', {
@@ -827,6 +845,12 @@ export async function POST(req: Request) {
         transcript = srtResult.transcript;
         source = srtResult.source;
         title = srtResult.title;
+
+        // If SRT file has a YouTube ID, use it instead of the SRT ID for database storage
+        if (srtResult.youtubeId) {
+          videoId = srtResult.youtubeId;
+          logger.info(`Using YouTube ID from SRT file: ${videoId}`);
+        }
       } else {
         // Process YouTube video
         const videoResult = await getTranscript(videoId);

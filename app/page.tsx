@@ -38,6 +38,7 @@ export default function Home() {
   const [inputType, setInputType] = useState<"url" | "srt">("url")
   const [srtFile, setSrtFile] = useState<File | null>(null)
   const [srtFileName, setSrtFileName] = useState<string>("")
+  const [youtubeId, setYoutubeId] = useState<string>("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -61,6 +62,12 @@ export default function Home() {
         alert("Invalid YouTube URL. Please enter a valid YouTube URL.")
       }
     } else if (inputType === "srt" && srtFile) {
+      // Validate YouTube ID
+      if (!youtubeId || youtubeId.length !== 11) {
+        alert("Please enter a valid YouTube video ID (11 characters)");
+        return;
+      }
+
       // Create a FormData object to send the file
       const formData = new FormData()
       formData.append("srtFile", srtFile)
@@ -68,6 +75,7 @@ export default function Home() {
       formData.append("mode", mode)
       formData.append("aiModel", aiModel)
       formData.append("fileName", srtFileName)
+      formData.append("youtubeId", youtubeId)
 
       try {
         // Upload the SRT file first
@@ -163,6 +171,23 @@ export default function Home() {
                       Selected file: {srtFileName}
                     </p>
                   )}
+                  <div className="mt-3">
+                    <label className="text-sm font-medium mb-1 block">
+                      YouTube Video ID (11 characters)
+                    </label>
+                    <Input
+                      type="text"
+                      value={youtubeId}
+                      onChange={(e) => setYoutubeId(e.target.value.trim())}
+                      placeholder="dQw4w9WgXcQ"
+                      required={inputType === "srt"}
+                      pattern="[a-zA-Z0-9_-]{11}"
+                      title="Please enter a valid YouTube video ID (11 characters)"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter the YouTube video ID that corresponds to this SRT file
+                    </p>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
