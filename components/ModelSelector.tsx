@@ -87,7 +87,7 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
   // During server-side rendering or before hydration, show a non-interactive element
   if (!mounted) {
     return (
-      <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm">
+      <div className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs">
         {MODEL_NAMES[selectedModel as keyof typeof MODEL_NAMES]}
       </div>
     );
