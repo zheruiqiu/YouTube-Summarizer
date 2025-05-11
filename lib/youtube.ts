@@ -132,10 +132,15 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
     - Future implications and expert predictions
 
     📊 ${prompts.details}:
-    - Provide a comprehensive analysis of the content
-    - Explain complex concepts in depth
-    - Include relevant data and statistics
-    - Discuss methodologies or approaches mentioned
+    - Provide an extensive and in-depth analysis of the content (use at least 1000-1500 words)
+    - Explain complex concepts thoroughly with multiple examples and analogies
+    - Include all relevant data, statistics, and quantitative information
+    - Discuss methodologies or approaches in detail, including their strengths and limitations
+    - Analyze different perspectives and viewpoints presented
+    - Connect ideas across different sections of the content
+    - Highlight nuances and subtle points that might be easily missed
+    - Provide historical context or background information when relevant
+    - Discuss potential applications or implications of the main ideas
 
     Text to summarize: ${text}
 
@@ -169,10 +174,15 @@ export function createSummaryPrompt(text: string, targetLanguage: string, mode: 
   - Future implications
 
   📋 ${prompts.details}:
-  - Provide a more comprehensive analysis
-  - Explain important concepts thoroughly
-  - Include supporting evidence and data
-  - Discuss any methodologies or approaches
+  - Provide an extensive and in-depth analysis of the content (use at least 1000-1500 words)
+  - Explain important concepts thoroughly with multiple examples and analogies
+  - Include all supporting evidence, data, and quantitative information
+  - Discuss methodologies or approaches in detail, including their strengths and limitations
+  - Analyze different perspectives and viewpoints presented
+  - Connect ideas across different sections of the content
+  - Highlight nuances and subtle points that might be easily missed
+  - Provide historical context or background information when relevant
+  - Discuss potential applications or implications of the main ideas
 
   Text to summarize: ${text}
 
