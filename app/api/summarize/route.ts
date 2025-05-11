@@ -139,8 +139,10 @@ const AI_MODELS = {
       if (!genAI) {
         throw new Error(`${MODEL_NAMES.gemini} API key is not configured. Please add your API key in the settings or choose a different model.`);
       }
+      // Add instruction to base summary strictly on the provided content
+      const enhancedPrompt = `IMPORTANT INSTRUCTION: Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content.\n\n${prompt}`;
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(enhancedPrompt);
       const response = await result.response;
       return cleanModelOutput(response.text());
     }
@@ -157,7 +159,7 @@ const AI_MODELS = {
         messages: [
           {
             role: "system",
-            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
+            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese. Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content."
           },
           {
             role: "user",
@@ -183,7 +185,7 @@ const AI_MODELS = {
         messages: [
           {
             role: "system",
-            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese."
+            content: "You are a direct and concise summarizer. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. If the language is Chinese, ensure the summary is in fluent, natural Chinese. Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content."
           },
           {
             role: "user",
@@ -211,7 +213,7 @@ const AI_MODELS = {
           messages: [
             {
               role: "system",
-              content: "You are a comprehensive summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. Follow the exact format structure provided in the prompt, including all emojis and section headers. If the language is Chinese, ensure the summary is in fluent, natural Chinese. Pay special attention to the 'details' section, which should be extensive and thorough (at least 1000-1500 words), providing in-depth analysis, multiple examples, and comprehensive explanations. Take full advantage of your 8K token output capacity to create detailed, nuanced summaries, especially in the details section."
+              content: "You are a comprehensive summarizer with strong reasoning capabilities. Respond only with the summary in the requested language, without any prefixes or meta-commentary. Keep all markdown formatting intact. Follow the exact format structure provided in the prompt, including all emojis and section headers. If the language is Chinese, ensure the summary is in fluent, natural Chinese. Pay special attention to the 'details' section, which should be extensive and thorough (at least 1000-1500 words), providing in-depth analysis, multiple examples, and comprehensive explanations. Take full advantage of your 8K token output capacity to create detailed, nuanced summaries, especially in the details section. Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content."
             },
             {
               role: "user",
@@ -887,6 +889,8 @@ export async function POST(req: Request) {
         - Important details and examples
         - Connections with other mentioned topics
         - Key statements and conclusions
+
+        IMPORTANT: Base your summary STRICTLY on the provided content - do not include any imagined, fabricated, or speculative information that is not present in the original content.
 
         Text: ${chunkText}`;
 
