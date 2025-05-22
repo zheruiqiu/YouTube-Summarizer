@@ -13,7 +13,7 @@ Zherui Qiu (Copyright (c) 2025)
 - Fixed DeepSeek API integration using OpenAI SDK
 - Removed German language support
 - Set DeepSeek as default model and moved it to the top of the list
-- Switched from deepseek-chat to deepseek-reasoner model
+- Switched from deepseek-reasoner to deepseek-chat model
 - Added Windows batch scripts for easy application launch
 - Optimized DeepSeek model configuration for better performance
 - Added DeepSeek API error handling

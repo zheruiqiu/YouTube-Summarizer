@@ -7,7 +7,7 @@ A modern Next.js application for AI-powered YouTube video summarization. This ap
 ## 🎯 Features
 
 - **Multiple AI Models**: Choose your preferred AI model for summarization:
-  - DeepSeek Reasoner (Advanced reasoning capabilities)
+  - DeepSeek-V3 (Advanced language model with 64K context window)
   - Google Gemini 2.0 Flash (Fast and efficient)
   - Groq with Llama 70B (High accuracy)
   - GPT-4o-mini (Balanced performance)

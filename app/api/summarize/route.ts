@@ -201,7 +201,7 @@ const AI_MODELS = {
   },
   deepseek: {
     name: "deepseek",
-    model: "deepseek-reasoner", // Using DeepSeek-R1 reasoning model
+    model: "deepseek-chat", // Using DeepSeek-V3 model
     async generateContent(prompt: string) {
       const deepseek = getDeepSeekClient();
       if (!deepseek) {
@@ -224,8 +224,7 @@ const AI_MODELS = {
           max_tokens: 8000, // Maximized token limit for comprehensive summaries (DeepSeek supports up to 8K output tokens)
         });
 
-        // deepseek-reasoner returns both reasoning_content and content
-        // We use the final content (answer) for the summary
+        // DeepSeek model returns content directly
         return cleanModelOutput(completion.choices[0]?.message?.content || '');
       } catch (error: any) {
         // Handle DeepSeek API specific errors
